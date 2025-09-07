@@ -1,0 +1,83 @@
+# Sensitive files - NEVER commit these
+.env
+*.key
+*.pem
+credentials.json
+secrets/
+config/credentials/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+pip-log.txt
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+.cache/
+
+# Google Cloud
+.gcloudignore
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Mission-specific data (keep out of repository)
+mission-data/
+telemetry-backups/
+*.gpx
