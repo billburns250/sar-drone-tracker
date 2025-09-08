@@ -19,7 +19,8 @@ def debug_skydio_connection():
     
     # Get credentials
     api_key = os.getenv('SKYDIO_API_KEY')
-    base_url = os.getenv('SKYDIO_BASE_URL', 'https://cloud.skydio.com/api/v1')
+#    base_url = os.getenv('SKYDIO_BASE_URL', 'https://cloud.skydio.com/api/v1')
+    base_url = os.getenv('SKYDIO_BASE_URL', 'https://api.skydio.com/api')
     
     print(f"API Key: {'*' * (len(api_key)-4) + api_key[-4:] if api_key else 'NOT SET'}")
     print(f"Base URL: {base_url}")

@@ -21,6 +21,7 @@ def test_base_urls():
     # Possible base URLs for Skydio API
     base_urls_to_test = [
         # Standard Cloud API
+        "https://api.skydio.com/api",
         "https://api.skydio.com/api/v1",
         "https://api.skydio.com/v1", 
         "https://cloud.skydio.com/rest/api/v1",

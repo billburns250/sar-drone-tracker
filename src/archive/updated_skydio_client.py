@@ -14,7 +14,7 @@ import time
 class SkydioClient:
     """Updated Skydio client with working endpoints"""
     
-    def __init__(self, api_token: str, base_url: str = "https://api.skydio.com/api/v1"):
+    def __init__(self, api_token: str, base_url: str = "https://api.skydio.com/api"):
         """
         Initialize Skydio client with working configuration
         """
