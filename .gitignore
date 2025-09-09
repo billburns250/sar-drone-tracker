@@ -29,6 +29,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+archive/
 
 # Virtual environments
 env/
@@ -81,3 +82,4 @@ temp/
 mission-data/
 telemetry-backups/
 *.gpx
+*.bak

@@ -1,5 +1,6 @@
 """
 Simple WebSocket test script to debug Skydio live telemetry connection
+This tries multiple different methods to confirm which methods work
 """
 
 import os

@@ -10,7 +10,8 @@ Based on actual official example showing:
 import os
 import logging
 from dotenv import load_dotenv
-from src.final_corrected_skydio_client import SkydioClient, SkydioTelemetryExtractor
+#from src.final_corrected_skydio_client import SkydioClient, SkydioTelemetryExtractor
+from test_skydio_client import SkydioClient, SkydioTelemetryExtractor
 
 # Load environment variables
 load_dotenv()
