@@ -7,6 +7,7 @@ Display and track your Skydio X10 drone’s real-time location in CalTopo using 
 
 ## High Level Architecture
 
+
 This script polls the Skydio Cloud for a vehicle status and then polls Skydio Cloud’s real-time telemetry API endpoint for the drone every 10 seconds (configurable) for the drone’s coordinates. The coordinates are immediately relayed to the CalTopo servers and posted to their respective “Trackable Device” at the same polling interval. The identifier of the X10 drone is set in a configuration file, and access to Skydio Cloud is authenticated by an API key. The only communication of this software is between Skydio Cloud API endpoints (vehicle status and realtime telemetry) and CalTopo’s Location Tracker API endpoint.
 
 CalTopo doesn’t require / doesn’t allow any authentication to post location updates for these types of devices, so access is obscured by choosing harder-to-guess device names. This script does not need or use a [CalTopo API / Service Account](https://training.caltopo.com/all_users/team-accounts/teamapi). Each Trackable Device can be displayed on a map in realtime, and tracks leave a trail. According to CalTopo documentation, after 3000 tracks are received or after a device stops receiving updates for 24 hours or after manually stopping a tracks recording, the recorded track is converted to a “Line and Polygon”.
