@@ -202,15 +202,4 @@ It’s not known if one or both of the drone and the controller need a live inte
    1. \# Core dependencies  
    2. requests\>=2.31.0  
    3. python-dotenv\>=1.0.0  
-   4. \# Time and date handling  
-   5. python-dateutil\>=2.8.2  
-   6. pytz\>=2023.3  
-   7. \# Data processing  
-   8. geojson\>=3.1.0  
-   9. \# Development and testing  
-   10. pytest\>=7.4.0  
-   11. pytest-cov\>=4.1.0  
-   12. black\>=23.9.1  
-   13. flake8\>=6.1.0  
-   14. \# For local development and testing  
-   15. flask\>=2.3.3
+   4. websockets>=15.0.1

@@ -1,5 +1,6 @@
 """
 SAR Drone Tracker - Clean version with proper logging separation
+(c) 2025 SaferFuturesByDesign - Bill Burns
 """
 
 import os

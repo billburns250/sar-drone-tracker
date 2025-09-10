@@ -1,5 +1,12 @@
 Disclosure policy: If you find a security issue, please email bill@SaferFuturesByDesign.com
 
+Safety Considerations: - This software only requires READ-ONLY API level access to Skydio Cloud. It doesn't require ANY API credentials
+                       to CalTopo. 
+                       - When this software fails, no aircraft, controller or software is impacted -- logging to CalTopo stops.
+                       - You should practice least-privilege when configuring your API keys and access levels.
+                       - CalTopo has NO AUTHENTICATION for location trackers, so you should not rely on drone telemetry since it may be
+                       spoofed or jammed.
+
 Security Update Policy: Security issues reported will be acknowledged within 72 hours. Fixes will be issued in a timely manned, commensurate with the level of severity.
 
 Security Configurations: 
