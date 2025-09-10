@@ -184,22 +184,14 @@ This step is not necessary for CalTopo Teams-level Accounts. Each time you need 
 
 ### Your Skydio Cloud Account
 
-Your API access key needs to have the following read-only access permissions: Attachments, Batteries, Flight Telemetry, Flights, JWT Validation, Live Telemetry, OpenAPI Spec, Sensor Package, Users, Vehicles, Webhook Validation, Webhooks, and Whoami.
+You can test your API access-level to Skydio Cloud by using the included test script “test\_skydio\_api.py”
 
-You can test your API access-level by using the included test script “test\_final\_skydio.py”
+You can test your real-time telemetry (websocket) access by using the included test script “test\_skydio\_websocket.py”
 
-You can test your real-time telemetry (websocket) access by using the included test script “websocket\_test.py”
-
-### Your Skydio Drone
-
-It’s not known if one or both of the drone and the controller need a live internet connection, either 5G Cellular or Wifi.
-
-### Your Local System
+### Dependencies
 
 1. python 3.13.7 or newer  
-2. These files: [https://github.com/users/billburns250/projects/1](https://github.com/users/billburns250/projects/1)  
-3. These python dependencies (need to confirm these)  
-   1. \# Core dependencies  
-   2. requests\>=2.31.0  
-   3. python-dotenv\>=1.0.0  
-   4. websockets>=15.0.1
+3. Python dependencies
+   - requests\>=2.31.0  
+   - python-dotenv\>=1.0.0  
+   - websockets>=15.0.1
