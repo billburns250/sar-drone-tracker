@@ -185,7 +185,7 @@ This step is not necessary for CalTopo Teams-level Accounts. Each time you need 
 - [Skydio’s Cloud API github repository](https://github.com/Skydio/skydio-cloud-api-examples)  
 - [Skydio Cloud](https://cloud.skydio.com/)  
 - [Skydio Cloud Live Telemetry API](https://apidocs.skydio.com/reference/live-telemetry)  
-- [This script’s github repository](https://github.com/users/billburns250/projects/1) (private)
+- [This script’s github repository](https://github.com/users/billburns250/projects/1)
 
 ### Your Skydio Cloud Account
 
