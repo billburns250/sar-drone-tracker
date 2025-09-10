@@ -34,7 +34,12 @@ This script was designed to be run from a local system or server, to keep comple
 
 ## Installation Instructions
 
-TBD
+1. git clone this repository
+2. READ all of the below configuration steps
+3. run the included setup script in ./scripts/setup.sh
+
+To run the software, "python src/sar_drone_tracker.py" 
+
 
 ## Using This Software – Tracking Your Drone During A Mission
 
