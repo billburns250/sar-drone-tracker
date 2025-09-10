@@ -1,6 +1,5 @@
 """
-Simple SAR Drone Tracker - Direct approach without complex async structure
- v1.0 - inital release
+SAR Drone Tracker - Clean version with proper logging separation
 """
 
 import os
@@ -23,61 +22,102 @@ class SimpleDroneTracker:
         self.debug_enabled = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes', 'on')
         self.poll_interval = int(os.getenv('POLL_INTERVAL_SECONDS', '10'))
         
+        # Get logging levels from environment
+        self.console_log_level = self._parse_log_level(os.getenv('CONSOLE_LOG_LEVEL', 'INFO'))
+        self.file_log_level = self._parse_log_level(os.getenv('FILE_LOG_LEVEL', 'INFO'))
+        
         # Set up logging
         self._setup_logging()
         
         if not all([self.api_token, self.caltopo_connect_key, self.drone_serials]):
             raise ValueError("Missing required environment variables")
     
+    def _parse_log_level(self, level_str):
+        """Parse log level string to logging constant"""
+        level_map = {
+            'DEBUG': logging.DEBUG,
+            'INFO': logging.INFO,
+            'WARNING': logging.WARNING,
+            'ERROR': logging.ERROR,
+            'CRITICAL': logging.CRITICAL
+        }
+        return level_map.get(level_str.upper(), logging.INFO)
+    
     def _setup_logging(self):
-        """Set up file and console logging"""
-        # Create logs directory if it doesn't exist
+        """Set up CLEAN logging with no duplicates"""
+        # Create logs directory
         os.makedirs('./logs', exist_ok=True)
         
         # Create timestamp for log file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         log_file = f'./logs/sar_tracker_{timestamp}.log'
         
-        # Set logging level based on debug setting
-        log_level = logging.DEBUG if self.debug_enabled else logging.INFO
+        # Completely disable all existing loggers
+        logging.getLogger().handlers = []
+        logging.getLogger().setLevel(logging.CRITICAL + 1)  # Disable root logger
         
-        # Configure logging
-        logging.basicConfig(
-            level=log_level,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler()  # Still show on console
-            ]
-        )
-        
+        # Create our specific logger
         self.logger = logging.getLogger('SARTracker')
-        self.logger.info(f"Logging to: {log_file}")
-    
-    def _debug_print(self, message):
-        """Print debug message only if debug is enabled"""
-        if self.debug_enabled:
-            print(message)
-            self.logger.debug(message)
-    
-    def _log_info(self, message):
-        """Log and print info message"""
-        print(message)
-        self.logger.info(message)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.handlers = []  # Ensure clean start
+        self.logger.propagate = False  # Never propagate to parent loggers
+        
+        # File handler - always created
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setLevel(self.file_log_level)
+        file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(file_formatter)
+        self.logger.addHandler(file_handler)
+        
+        # Console handler - only if needed
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(self.console_log_level)
+        console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(console_formatter)
+        self.logger.addHandler(console_handler)
+        
+        # Store file path
+        self.log_file_path = log_file
+        
+        # Initial log messages
+        self.logger.warning(f"Logging to: {log_file}")
+        self.logger.warning(f"Console log level: {logging.getLevelName(self.console_log_level)}")
+        self.logger.warning(f"File log level: {logging.getLevelName(self.file_log_level)}")
     
     def _generate_device_id(self, serial: str) -> str:
         """Generate CalTopo device ID from drone serial number"""
         last_four = serial[-4:] if len(serial) >= 4 else serial
         return f"{self.caltopo_connect_key}-{last_four}"
     
+    def _make_console_safe(self, message):
+        """Convert Unicode characters to safe alternatives only on Windows"""
+        import platform
+        
+        # Only apply ASCII conversion on Windows
+        if platform.system() != 'Windows':
+            return message
+        
+        # Replace Unicode emoji with ASCII alternatives for Windows
+        replacements = {
+            '📍': '[GPS]',      '✅': '[OK]',       '❌': '[ERR]',
+            '🔗': '[CONN]',     '🔧': '[DBG]',      '⚠️': '[WARN]',
+            '🚁': '[DRONE]',    '📡': '[TRACK]',    '🗂️': '[DEV]',
+            '🔌': '[DISC]',     '⏳': '[WAIT]',     '💔': '[FAIL]',
+        }
+        
+        safe_message = message
+        for unicode_char, ascii_replacement in replacements.items():
+            safe_message = safe_message.replace(unicode_char, ascii_replacement)
+        
+        return safe_message
+    
     def _update_caltopo_position(self, device_id: str, latitude: float, longitude: float, altitude=None) -> bool:
-        """Update position in CalTopo Connect tracking - CORRECT FORMAT"""
+        """Update position in CalTopo Connect tracking"""
         try:
-            # Extract just the device identifier (last 4 digits) from full device_id
-            device_identifier = device_id.split('-')[-1]  # "sccssar_uas-ocd7" -> "ocd7"
+            device_identifier = device_id.split('-')[-1]
             
             params = {
-                "id": device_identifier,  # Just "ocd7", not "sccssar_uas-ocd7"
+                "id": device_identifier,
                 "lat": latitude,
                 "lng": longitude
             }
@@ -85,25 +125,21 @@ class SimpleDroneTracker:
             if altitude is not None:
                 params["alt"] = altitude
                 
-            # Connect key in URL path, device ID in query parameter
             url = f"https://caltopo.com/api/v1/position/report/{self.caltopo_connect_key}"
             
-            self._debug_print(f"CalTopo: {url}?{requests.compat.urlencode(params)}")
+            self.logger.debug(f"CalTopo: {url}?{requests.compat.urlencode(params)}")
             
             response = requests.get(url, params=params, timeout=10)
             
-            self._debug_print(f"   Status: {response.status_code} | Response: {response.text[:100]}")
-            self.logger.debug(f"CalTopo update: {response.status_code} for {device_id}")
+            self.logger.debug(f"CalTopo Status: {response.status_code} | Response: {response.text[:100]}")
             
             if response.status_code == 200:
                 return True
             else:
-                self._debug_print(f"   CalTopo failed: HTTP {response.status_code}")
                 self.logger.warning(f"CalTopo update failed: HTTP {response.status_code} for {device_id}")
                 return False
                 
         except Exception as e:
-            self._debug_print(f"   CalTopo error: {e}")
             self.logger.error(f"CalTopo error for {device_id}: {e}")
             return False
     
@@ -126,12 +162,12 @@ class SimpleDroneTracker:
             return None
 
 async def track_single_drone(tracker, serial):
-    """Track a single drone using the proven working pattern"""
+    """Track a single drone"""
     
     device_id = tracker._generate_device_id(serial)
     url = f"wss://stream.skydio.com/data/{serial}"
     
-    tracker._log_info(f"Starting tracking for Drone ID [{serial}] -> CalTopo Object [{device_id}]")
+    tracker.logger.warning(f"Starting tracking for Drone ID [{serial}] -> CalTopo Object [{device_id}]")
     
     # Check drone status first
     status = tracker._check_drone_status(serial)
@@ -151,19 +187,18 @@ async def track_single_drone(tracker, serial):
             pkg_type = sensor_pkg.get('sensor_package_type', 'Unknown')
             attachments.append(pkg_type)
         
-        # Check for other attachment types that might be in the vehicle data
         for key in status.keys():
             if 'attachment' in key.lower() and key != 'sensor_package':
                 attachments.append(str(status[key]))
         
         attachments_str = ', '.join(attachments) if attachments else 'None'
         
-        tracker._log_info(f"Found {serial}: {name} | Flight: {flight_status} | Battery: {battery_pct:.1f}% | Attachments: {attachments_str} | Online: {is_online}")
+        tracker.logger.warning(f"Found {serial}: {name} | Flight: {flight_status} | Battery: {battery_pct:.1f}% | Attachments: {attachments_str} | Online: {is_online}")
     else:
-        tracker._log_info(f"Could not find drone {serial}")
+        tracker.logger.info(f"Could not find drone {serial}")
         return
     
-    # Connect to WebSocket using exact pattern from working test
+    # Connect to WebSocket
     headers = {"Authorization": f"ApiToken {tracker.api_token}"}
     
     retry_count = 0
@@ -171,17 +206,15 @@ async def track_single_drone(tracker, serial):
     
     while retry_count < max_retries:
         try:
-            tracker._log_info(f"Connecting to {url}...")
+            tracker.logger.warning(f"Connecting to {url}...")
             
             async with websockets.connect(url, additional_headers=headers) as websocket:
-                tracker._log_info(f"Connected to {serial}")
+                tracker.logger.warning(f"Connected to {serial}")
                 
                 message_count = 0
-                start_time = time.time()
                 first_position_logged = False
                 last_update_time = 0
                 
-                # Use exact same message receiving pattern as working test
                 async for message in websocket:
                     try:
                         message_count += 1
@@ -189,7 +222,6 @@ async def track_single_drone(tracker, serial):
                         
                         # Parse telemetry
                         data = json.loads(message)
-                        msg_type = data.get('type', 'unknown')
                         
                         # Extract GPS
                         lat = data.get('lat')
@@ -210,7 +242,7 @@ async def track_single_drone(tracker, serial):
                                     if altitude:
                                         params["alt"] = altitude
                                     example_url = f"https://caltopo.com/api/v1/position/report/{tracker.caltopo_connect_key}?{requests.compat.urlencode(params)}"
-                                    tracker._log_info(f"Posting CalTopo Updates As: {example_url}")
+                                    tracker.logger.warning(f"Posting CalTopo Updates As: {example_url}")
                                     first_position_logged = True
                                 
                                 # Update CalTopo
@@ -227,38 +259,36 @@ async def track_single_drone(tracker, serial):
                                 alt_str = f", alt={altitude:.1f}m" if altitude else ""
                                 
                                 update_msg = f"{status_icon} {device_id}: {latitude:.6f}, {longitude:.6f}{alt_str} | Batt: {battery:.1f}% | Speed: {speed:.1f}m/s | Sats: {sats}"
-                                tracker._log_info(update_msg)
+                                tracker.logger.info(update_msg)
                                 
                                 if not success:
-                                    tracker._log_info(f"   CalTopo update failed")
+                                    tracker.logger.warning(f"CalTopo update failed for {device_id}")
                                 
                                 last_update_time = current_time
                             else:
                                 # Log telemetry received but not processed (debug only)
-                                tracker._debug_print(f"Telemetry received (waiting for poll interval): {message_count}")
+                                tracker.logger.debug(f"Telemetry received (waiting for poll interval): {message_count}")
                         else:
-                            tracker._debug_print(f"{device_id}: {msg_type} message #{message_count} (no GPS)")
+                            tracker.logger.debug(f"{device_id}: {data.get('type', 'unknown')} message #{message_count} (no GPS)")
                             
                     except json.JSONDecodeError:
-                        tracker._debug_print(f"Invalid JSON from {serial}")
                         tracker.logger.warning(f"Invalid JSON received from {serial}")
                     except Exception as e:
-                        tracker._debug_print(f"Error processing message: {e}")
                         tracker.logger.error(f"Error processing message from {serial}: {e}")
                         
         except websockets.exceptions.ConnectionClosed:
-            tracker._log_info(f"Connection closed for {serial}")
+            tracker.logger.info(f"Connection closed for {serial}")
             retry_count += 1
         except Exception as e:
-            tracker._log_info(f"Connection error for {serial}: {e}")
+            tracker.logger.error(f"Connection error for {serial}: {e}")
             retry_count += 1
             
         if retry_count < max_retries:
             wait_time = 2 ** retry_count
-            tracker._log_info(f"Retrying {serial} in {wait_time}s...")
+            tracker.logger.info(f"Retrying {serial} in {wait_time}s...")
             await asyncio.sleep(wait_time)
     
-    tracker._log_info(f"Max retries exceeded for {serial}")
+    tracker.logger.error(f"Max retries exceeded for {serial}")
 
 async def main():
     """Main tracking function"""
@@ -266,12 +296,12 @@ async def main():
     try:
         tracker = SimpleDroneTracker()
         
-        tracker._log_info("SAR Drone Tracker")
-        tracker._log_info(f"Tracking: {tracker.drone_serials}")
-        tracker._log_info(f"Call Signs: {[tracker._generate_device_id(s) for s in tracker.drone_serials]}")
-        tracker._log_info(f"Poll Interval: {tracker.poll_interval} seconds")
-        tracker._log_info(f"Debug Mode: {'Enabled' if tracker.debug_enabled else 'Disabled'}")
-        tracker._log_info("=" * 60)
+        tracker.logger.warning("SAR Drone Tracker")
+        tracker.logger.warning(f"Tracking: {tracker.drone_serials}")
+        tracker.logger.warning(f"Device IDs: {[tracker._generate_device_id(s) for s in tracker.drone_serials]}")
+        tracker.logger.warning(f"Poll Interval: {tracker.poll_interval} seconds")
+        tracker.logger.warning(f"Debug Mode: {'Enabled' if tracker.debug_enabled else 'Disabled'}")
+        tracker.logger.warning("=" * 60)
         
         # Create tasks for each drone
         tasks = []
@@ -283,18 +313,33 @@ async def main():
         await asyncio.gather(*tasks, return_exceptions=True)
         
     except ValueError as e:
+        # Only print configuration errors directly (no logging setup yet)
         print(f"Configuration Error: {e}")
         print("\nRequired environment variables:")
         print("  API_TOKEN=your_skydio_api_token")
         print("  CALTOPO_CONNECT_KEY=your_caltopo_connect_key") 
         print("  DRONE_SERIALS=serial1,serial2,serial3")
         print("Optional:")
-        print("  DEBUG=true  # Enable debug logging")
-        print("  POLL_INTERVAL_SECONDS=10  # How often to update CalTopo")
+        print("  DEBUG=true")
+        print("  POLL_INTERVAL_SECONDS=10")
+        print("  CONSOLE_LOG_LEVEL=ERROR")
+        print("  FILE_LOG_LEVEL=INFO")
     except KeyboardInterrupt:
-        print("\nStopped by user")
+        try:
+            if 'tracker' in locals():
+                tracker.logger.info("Stopped by user")
+            else:
+                print("\nStopped by user")
+        except:
+            print("\nStopped by user")
     except Exception as e:
-        print(f"Error: {e}")
+        try:
+            if 'tracker' in locals():
+                tracker.logger.error(f"Unexpected error: {e}")
+            else:
+                print(f"Error: {e}")
+        except:
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
