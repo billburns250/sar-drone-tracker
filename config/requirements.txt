@@ -1,29 +1,4 @@
 # Core dependencies
 requests>=2.31.0
 python-dotenv>=1.0.0
-
-# Google Cloud
-functions-framework>=3.4.0
-google-cloud-functions>=1.15.0
-google-cloud-logging>=3.8.0
-google-cloud-secret-manager>=2.16.4
-
-# CalTopo API (unofficial library)
-# Note: We'll create our own client, but this is available if needed
-# caltopo-python>=1.0.0
-
-# Time and date handling
-python-dateutil>=2.8.2
-pytz>=2023.3
-
-# Data processing
-geojson>=3.1.0
-
-# Development and testing
-pytest>=7.4.0
-pytest-cov>=4.1.0
-black>=23.9.1
-flake8>=6.1.0
-
-# For local development and testing
-flask>=2.3.3
+websockets>=15.0.1
