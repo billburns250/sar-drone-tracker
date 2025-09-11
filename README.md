@@ -196,7 +196,7 @@ You can test your real-time telemetry (websocket) access by using the included t
 ### Dependencies
 
 1. python 3.13.7 or newer  
-3. Python dependencies
+2. Python dependencies
    - requests\>=2.31.0  
    - python-dotenv\>=1.0.0  
    - websockets>=15.0.1
